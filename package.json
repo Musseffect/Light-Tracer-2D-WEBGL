@@ -1,0 +1,40 @@
+{
+  "name": "LightTracer2D",
+  "version": "1.0.0",
+  "description": "Light tracer in javascript",
+  "main": "webpack.config.js",
+  "dependencies": {
+    "@types/jquery": "^3.3.31",
+    "raw-loader": "^3.1.0",
+    "source-map-loader": "^0.2.4",
+    "typescript": "^3.6.2",
+    "webpack": "^4.39.3",
+    "webpack-cli": "^3.3.8"
+  },
+  "devDependencies": {
+    "d3": "^5.12.0",
+    "gh-pages": "^2.1.1",
+    "jquery": "^3.4.1",
+    "ts-loader": "^6.0.4",
+    "ts-node": "^8.3.0",
+    "webpack-dev-server": "^3.8.0"
+  },
+  "scripts": {
+    "build:dev": "webpack --mode development",
+    "watch:dev": "webpack --watch --mode development",
+    "startServer": "webpack-dev-server --mode development",
+    "build:prod": "webpack --mode production --config webpack.prod.config.js",
+    "deploy": "gh-pages -d dist -b master"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Musseffect/Light-Tracer-2D.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Musseffect/Light-Tracer-2D/issues"
+  },
+  "homepage": "https://github.com/Musseffect/Light-Tracer-2D#readme"
+}

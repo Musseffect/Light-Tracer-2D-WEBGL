@@ -1,0 +1,164 @@
+<html>
+<head>
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="./main.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+<audio id="playAudio" src="http://www.soundjay.com/button/beep-07.wav"></audio>
+<div class="container">
+    <div class="row my-2">
+        <label class="h2 mx-auto">Light Tracer 2D</label>
+    </div>
+    <div class="row my-2">
+        <canvas id="canvas" width="1024" height="1024" ></canvas>
+    </div>
+    <div class="row my-2 flex-column d-flex">
+        <progress id="progressBar" class="w-100" value="100" max=100></progress>
+        <label class="font-weight-light text-muted" id="progressLabel">Progress</label>
+    </div>
+    <div class="row my-2">
+        <button id="runButton" class="btn btn-primary center-block">Run</button>
+    </div>
+    <div class="row my-2">
+        <button id="runButton" class="btn btn-primary center-block">Save image</button>
+    </div>
+    <div  class="row my-2 flex-column d-flex">
+        <label class="h5 align-self-start" data-toggle="tooltip" data-placement="top" title="Controls the brightness of image">Exposure</label>
+        <input id="exposure" type="range" class="custom-range" min="-10" max="20" value="1" step="0.1"/>
+        <label class="font-weight-light text-muted" id="exposureLabel">exposure label</label>
+    </div>
+    <div  class="row my-2 flex-column d-flex">
+        <label class="h5 align-self-start" data-toggle="tooltip" data-placement="top" title="Resolution of offscreen buffer">Screen resolution</label>
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <button class="btn btn-primary">
+                <input type="radio" name="options" id="option256" data-w="256" data-h="256" autocomplete="off">256x256 px</button>
+                <button class="btn btn-primary active">
+                <input type="radio" name="options" id="option512" data-w="512" data-h="512" checked autocomplete="off">512x512 px</button>
+                <button class="btn btn-primary">
+                <input type="radio" name="options" id="option1024" data-w="1024" data-h="1024" autocomplete="off">1024x1024 px</button>
+                <button class="btn btn-primary">
+                <input type="radio" name="options" id="option1920" data-w="1920" data-h="1920" autocomplete="off">1920x1920 px</button>
+                <button class="btn btn-primary">
+                <input type="radio" name="options" id="option3840" data-w="3840" data-h="3840" autocomplete="off">3840x3840 px</button>
+        </div>
+        <label class="font-weight-light text-muted" id="resolutionLabel">Current resolution</label>
+    </div>
+    <div  class="row my-2 flex-column d-flex">
+        <label class="h5 align-self-start" data-toggle="tooltip" data-placement="top" title="Number of light rays">Light rays</label>
+        <input id="gpuRays" type="range" class="custom-range" min="1" max="2000" value="128" step="1"/>
+        <label class="font-weight-light text-muted" id="gpuRaysLabel">rays label</label>
+    </div>
+    <div  class="row my-2 flex-column d-flex">
+        <label class="h5 align-self-start" data-toggle="tooltip" data-placement="top" title="Number of bounces for each ray">Ray depth</label>
+        <input id="raydepth" type="range" class="custom-range" min="0" max="15" value="6" step="1"/>
+        <label class="font-weight-light text-muted" id="raydepthLabel">ray depth label</label>
+    </div>
+    <div  class="row my-2 flex-column d-flex">
+        <label class="h5 align-self-start" data-toggle="tooltip" data-placement="top" title="Use JSON to describe scene">Scene</label>
+        <textarea class="w-100 mb-5" rows="10">
+                objects:
+                [{
+                    type:"LINE",
+                    p1:[0,0],
+                    p2:[0,1],
+                    material:0
+                }]
+                lights:
+                [{
+                    type:"POINT",
+                    center:0,
+                    color:[1,1,1]
+                }]
+        </textarea>
+    </div>
+</div>
+<div id="modal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Modal title</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body" id="modal-body">
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">OK</button>
+        </div>
+        </div>
+    </div>
+</div>
+<div class="fluid-container flex-row d-flex flex-nowrap h-100 position-relative">
+    <div id="buttonPanel" style="position:absolute;width:100%;margin:20px;bottom:20px;display:flex;flex-direction:row;">
+    </div>
+    <svg id="editor" class="flex-grow-1 flex-shrink-1" style="background-color:rgb(221, 149, 16);width:auto;height:100%;"
+    viewBox="-20 -20 40 40" preserveAspectRatio="xMidYMid meet">
+        <symbol id="objectControl" viewBox="-200 -200 400 400">
+            <g>
+            <circle id="rotationHandle" r="130" id="rotation" stroke="yellow" fill="none"/>
+            <g id="moveXHandle">
+                <line x1="0" y1="0" x2="0" y2="-100" stroke="green" />
+                <polygon class="arrow" points="10,-80 0,-100 -10,-80" stroke="green" fill="green"/>
+            </g>
+            <g id="moveYHandle">
+                <line x1="0" y1="0" x2="100" y2="0" stroke="red" />
+                <polygon class="arrow" points="80,10 100,0 80,-10" stroke="red" fill="red"/>
+            </g>
+            <rect id="moveHandle" x="60" y="-80" width="20" height="20" fill="blue"/>
+            <rect id="scaleHandle" x="-10" y="-10" width="20" height="20" fill="blue"/>
+            <rect id="scaleXHandle" x="-10" y="-120" width="20" height="20" fill="green"/>
+            <rect id="scaleYHandle" x="100" y="-10" width="20" height="20" fill="red"/>
+            </g>
+        </symbol>
+        <symbol id="grid" viewBox="-200 -200 400 400">
+            <g>
+            <line x1="-200" y1="0" x1="200" y2="0" stroke="black"/>
+            <line x1="0" y1="-200" x1="0" y2="200" stroke="black"/>
+            <rect x="0" y="-10" width="10" height="10" fill="none" stroke="black"/>
+            </g>
+        </symbol>
+        <symbol id="line" viewBox="0 0 10 10">
+            <line x1="0" y1="0" x2="10" y1="10">
+        </symbol>
+        <symbol id="circle" viewBox="0 0 10 10"></symbol>
+        <symbol id="lens" viewBox="0 0 10 10"></symbol>
+        <g id="scene">
+            <use xlink:href="#objectControl" x="-20" y="-20"/>
+            <use xlink:href="#grid" x="-20" y="-20">
+        </g>
+    </svg>
+    <div id="sidePanel" class="flex-grow-0 flex-shrink-0" style="background-color:red;width:400px;height:100%;">
+        <div id="cameraControls" style="display:flex;margin:10px;flex-direction:column;">
+            <label class="sidePanelRow">Translate</label>
+            <div class="controlRow sidePanelRow">
+                <label class="controlLabel">x</label>
+                <input type="number"/>
+            </div>
+            <div class="controlRow sidePanelRow">
+                <label class="controlLabel">y</label>
+                <input type="number"/>
+            </div>
+            <label class="sidePanelRow">Scale</label>
+            <div class="controlRow sidePanelRow">
+                <label class="controlLabel">x</label>
+                <input type="number"/>
+            </div>
+            <div class="controlRow sidePanelRow">
+                <label class="controlLabel">y</label>
+                <input type="number"/>
+            </div class="controlRow sidePanelRow">
+            <label class="sidePanelRow">Rotation</label>
+            <div  class="controlRow sidePanelRow"><input type="number"/></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="./bundle.js"></script>
+</body>
+</html>
